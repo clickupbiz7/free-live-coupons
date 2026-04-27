@@ -38,9 +38,11 @@ class="text-decoration-none">
 <!-- ICON / IMAGE -->
 <div class="icon-box">
 
-@if($cat->icon)
+@if($cat->icon && file_exists(public_path('uploads/categories/icons/'.$cat->icon)))
 
-<i class="{{ $cat->icon }}"></i>
+<img src="{{ asset('uploads/categories/icons/'.$cat->icon) }}"
+class="category-svg"
+alt="{{ $cat->name }}">
 
 @elseif($cat->image)
 
@@ -81,7 +83,7 @@ Explore Deals
 @empty
 
 <div class="col-12 text-center py-5">
-<h4>No Categories Found 😢</h4>
+<h4>No Categories Found</h4>
 </div>
 
 @endforelse
@@ -104,14 +106,14 @@ Explore Deals
 .inner-hero{
 padding:75px 0;
 background:
-radial-gradient(circle at top right,#7c3aed33,transparent 35%),
-linear-gradient(135deg,#0f172a,#111827,#1e293b);
+radial-gradient(circle at left,#ffffff22,transparent 30%),
+linear-gradient(135deg,#4f46e5,#7c3aed,#d946ef);
 color:#fff;
 }
 
 .inner-hero h1{
-font-size:52px;
-font-weight:900;
+font-size:36px;
+font-weight:600;
 margin-bottom:10px;
 }
 
@@ -144,7 +146,7 @@ color:#111;
 background:#fff;
 border:1px solid #e5e7eb;
 transition:.3s;
-font-weight:700;
+font-weight:600;
 }
 
 .alphabet-btn:hover{
@@ -196,7 +198,8 @@ font-size:38px;
 color:#4f46e5;
 }
 
-.category-img{
+.category-img,
+.category-svg{
 width:72px;
 height:72px;
 object-fit:cover;
@@ -210,7 +213,7 @@ padding:18px;
 
 .category-body h6{
 font-size:20px;
-font-weight:800;
+font-weight:600;
 color:#111827;
 margin-bottom:8px;
 }
@@ -227,7 +230,7 @@ margin-bottom:15px;
 .category-btn{
 padding:12px;
 border-radius:8px;
-font-weight:800;
+font-weight:600;
 color:#fff;
 background:linear-gradient(135deg,#4f46e5,#d946ef);
 transition:.3s;

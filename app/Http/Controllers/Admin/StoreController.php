@@ -5,12 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Store;
+use App\Exports\StoresExport;
+use App\Imports\StoresImport;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class StoreController extends Controller
 {
     public function index()
     {
         $stores = Store::latest()->get();
+
         return view('admin.stores.index', compact('stores'));
     }
 
@@ -19,37 +25,45 @@ class StoreController extends Controller
         return view('admin.stores.create');
     }
 
-  public function store(Request $request)
-{
-    $request->validate([
-        'name' => 'required',
-    ]);
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+        ]);
 
-    $data = [];
+        $data = [];
 
-    $data['name'] = $request->name;
-    $data['slug'] = \Str::slug($request->name);
-    $data['status'] = 1;
+        $data['name'] = $request->name;
+        $data['slug'] = Str::slug($request->name);
 
-    // IMAGE UPLOAD (LOGO)
-    if ($request->hasFile('logo')) {
+        /* STATUS FIX */
+        $data['status'] = $request->status ?? 1;
 
-        $image = $request->file('logo');
+        /* IMAGE UPLOAD */
+        if ($request->hasFile('logo')) {
 
-        $filename = time() . '.' . $image->getClientOriginalExtension();
+            $image = $request->file('logo');
 
-        $image->move(public_path('uploads/stores'), $filename);
+            $filename = time().'.'.$image->getClientOriginalExtension();
 
-        $data['logo'] = $filename;
+            $image->move(
+                public_path('uploads/stores'),
+                $filename
+            );
+
+            $data['logo'] = $filename;
+        }
+
+        Store::create($data);
+
+        return redirect('/admin/stores')
+            ->with('success', 'Store Added Successfully');
     }
 
-    \App\Models\Store::create($data);
-
-    return redirect('/admin/stores')->with('success', 'Store Added');
-}
     public function edit($id)
     {
         $store = Store::findOrFail($id);
+
         return view('admin.stores.edit', compact('store'));
     }
 
@@ -61,22 +75,95 @@ class StoreController extends Controller
             'name' => 'required'
         ]);
 
-        $data = $request->all();
+        $data = [];
+
+        $data['name'] = $request->name;
+        $data['slug'] = Str::slug($request->name);
+
+        /* STATUS FIX */
+        $data['status'] = $request->status ?? 1;
 
         if ($request->hasFile('logo')) {
-            $file = time().'_'.$request->logo->getClientOriginalName();
-            $request->logo->move(public_path('uploads/stores'), $file);
+
+            /* OLD DELETE */
+            if (
+                $store->logo &&
+                file_exists(
+                    public_path(
+                        'uploads/stores/'.$store->logo
+                    )
+                )
+            ) {
+                unlink(
+                    public_path(
+                        'uploads/stores/'.$store->logo
+                    )
+                );
+            }
+
+            $file = time().'.'.$request->logo->getClientOriginalExtension();
+
+            $request->logo->move(
+                public_path('uploads/stores'),
+                $file
+            );
+
             $data['logo'] = $file;
         }
 
         $store->update($data);
 
-        return redirect('/admin/stores')->with('success', 'Store Updated');
+        return redirect('/admin/stores')
+            ->with('success', 'Store Updated Successfully');
     }
 
     public function destroy($id)
     {
-        Store::findOrFail($id)->delete();
-        return back()->with('success', 'Deleted');
+        $store = Store::findOrFail($id);
+
+        if (
+            $store->logo &&
+            file_exists(
+                public_path(
+                    'uploads/stores/'.$store->logo
+                )
+            )
+        ) {
+            unlink(
+                public_path(
+                    'uploads/stores/'.$store->logo
+                )
+            );
+        }
+
+        $store->delete();
+
+        return back()->with('success', 'Store Deleted Successfully');
     }
+
+     public function export()
+{
+    return Excel::download(
+        new StoresExport,
+        'stores.xlsx'
+    );
+}
+
+    public function import(Request $request)
+{
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls,csv'
+    ]);
+
+    Excel::import(
+        new StoresImport,
+        $request->file('file')
+    );
+
+    return back()->with(
+        'success',
+        'Stores Imported Successfully'
+    );
+}
+
 }

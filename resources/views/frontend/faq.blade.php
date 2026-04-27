@@ -66,14 +66,14 @@ New offers and expired deals are updated frequently.
 .policy-hero{
 padding:85px 0;
 background:
-radial-gradient(circle at top right,#7c3aed33,transparent 35%),
-linear-gradient(135deg,#0f172a,#111827,#1e293b);
+radial-gradient(circle at left,#ffffff22,transparent 30%),
+linear-gradient(135deg,#4f46e5,#7c3aed,#d946ef);
 color:#fff;
 }
 
 .policy-hero h1{
-font-size:56px;
-font-weight:900;
+font-size:36px;
+font-weight:600;
 margin-bottom:12px;
 }
 
@@ -100,7 +100,7 @@ word-break:break-word;
 .policy-box h3,
 .policy-box h4,
 .policy-box h5{
-font-weight:900;
+font-weight:600;
 color:#111827;
 margin-top:25px;
 margin-bottom:12px;
@@ -153,7 +153,7 @@ margin-bottom:10px;
 /* LINKS */
 .policy-box a{
 color:#4f46e5;
-font-weight:700;
+font-weight:600;
 text-decoration:none;
 }
 
@@ -176,7 +176,7 @@ border:1px solid #e5e7eb;
 
 .policy-box table th{
 background:#f8fafc;
-font-weight:800;
+font-weight:600;
 }
 
 /* MOBILE */

@@ -174,14 +174,14 @@ Browse Coupons
 .inner-hero{
 padding:85px 0;
 background:
-radial-gradient(circle at top right,#7c3aed33,transparent 35%),
-linear-gradient(135deg,#0f172a,#111827,#1e293b);
+radial-gradient(circle at left,#ffffff22,transparent 30%),
+linear-gradient(135deg,#4f46e5,#7c3aed,#d946ef);
 color:#fff;
 }
 
 .inner-hero h1{
-font-size:56px;
-font-weight:900;
+font-size:36px;
+font-weight:600;
 margin-bottom:10px;
 }
 
@@ -196,7 +196,7 @@ display:inline-block;
 padding:7px 14px;
 border-radius:30px;
 font-size:12px;
-font-weight:800;
+font-weight:600;
 color:#4f46e5;
 background:#eef2ff;
 margin-bottom:15px;
@@ -225,8 +225,8 @@ box-shadow:0 10px 20px rgba(0,0,0,.08);
 }
 
 .about-title{
-font-size:42px;
-font-weight:900;
+font-size:30px;
+font-weight:600;
 line-height:1.2;
 margin-bottom:18px;
 color:#111827;
@@ -262,7 +262,7 @@ margin-right:6px;
 .cta-btn{
 padding:14px 28px;
 border-radius:12px;
-font-weight:800;
+font-weight:600;
 text-decoration:none;
 color:#fff;
 background:linear-gradient(135deg,#4f46e5,#d946ef);
@@ -287,7 +287,7 @@ height:100%;
 
 .stat-box h3{
 font-size:38px;
-font-weight:900;
+font-weight:600;
 margin-bottom:8px;
 background:linear-gradient(135deg,#4f46e5,#d946ef);
 -webkit-background-clip:text;
@@ -296,14 +296,14 @@ background:linear-gradient(135deg,#4f46e5,#d946ef);
 
 .stat-box p{
 margin:0;
-font-weight:700;
+font-weight:600;
 color:#64748b;
 }
 
 /* TITLE */
 .section-title{
-font-size:38px;
-font-weight:900;
+font-size:30px;
+font-weight:600;
 margin-top:10px;
 }
 
@@ -338,7 +338,7 @@ color:#4f46e5;
 
 .feature-box h5{
 font-size:22px;
-font-weight:800;
+font-weight:600;
 margin-bottom:10px;
 }
 
@@ -358,7 +358,7 @@ color:#fff;
 
 .cta-section h2{
 font-size:46px;
-font-weight:900;
+font-weight:600;
 margin-bottom:12px;
 }
 

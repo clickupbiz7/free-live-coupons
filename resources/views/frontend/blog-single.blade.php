@@ -1,7 +1,15 @@
-{{-- FILE 2: resources/views/frontend/blog.blade.php --}}
 @extends('frontend.layout')
 
 @section('content')
+
+{{-- ================= SINGLE BLOG TOP AD ================= --}}
+@if(isset($singleBlogTopAd) && $singleBlogTopAd)
+<div class="container pt-4">
+    <div class="ads-box text-center mb-4">
+        {!! $singleBlogTopAd->ad_code !!}
+    </div>
+</div>
+@endif
 
 <!-- HERO -->
 <section class="single-hero">
@@ -41,8 +49,16 @@ class="single-img"
 onerror="this.src='https://via.placeholder.com/900x450'">
 
 <div class="article-content">
-{!! nl2br(e($blog->content)) !!}
+{!! $blog->content !!}
 </div>
+
+{{-- ================= SINGLE BLOG MIDDLE AD ================= --}}
+@if(isset($singleBlogMiddleAd) && $singleBlogMiddleAd)
+<div class="ads-box text-center my-4">
+    {!! $singleBlogMiddleAd->ad_code !!}
+</div>
+@endif
+
 
 <div class="share-box">
 
@@ -91,6 +107,12 @@ onerror="this.src='https://via.placeholder.com/120x80'">
 @endforeach
 
 </div>
+
+@if($blogSidebarAd)
+<div class="sidebar-box mt-4">
+{!! $blogSidebarAd->ad_code !!}
+</div>
+@endif
 
 </div>
 
@@ -144,25 +166,42 @@ Read More
 
 <style>
 
+/* ADS ONLY */
+.ads-box{
+background:#fff;
+padding:18px;
+border-radius:18px;
+box-shadow:0 12px 28px rgba(0,0,0,.06);
+overflow:hidden;
+}
+
+.ads-box iframe,
+.ads-box img,
+.ads-box ins{
+max-width:100% !important;
+display:block;
+margin:auto;
+}
+
 /* HERO */
 .single-hero{
 padding:90px 0;
 background:
-radial-gradient(circle at top right,#7c3aed33,transparent 35%),
-linear-gradient(135deg,#0f172a,#111827,#1e293b);
+radial-gradient(circle at left,#ffffff22,transparent 30%),
+linear-gradient(135deg,#4f46e5,#7c3aed,#d946ef);
 color:#fff;
 }
 
 .single-hero h1{
-font-size:54px;
-font-weight:900;
+font-size:36px;
+font-weight:600;
 max-width:900px;
 margin:auto;
 line-height:1.25;
 }
 
 .meta-single{
-margin-top:16px;
+margin-top:18px;
 opacity:.9;
 }
 
@@ -202,6 +241,30 @@ margin-bottom:14px;
 margin-bottom:18px;
 }
 
+.article-content img{
+max-width:100%;
+height:auto;
+display:block;
+margin:18px auto;
+border-radius:14px;
+}
+
+.article-content figure{
+margin:20px 0;
+}
+
+.article-content table{
+width:100%;
+border-collapse:collapse;
+margin:20px 0;
+}
+
+.article-content table td,
+.article-content table th{
+border:1px solid #e5e7eb;
+padding:10px;
+}
+
 /* SHARE */
 .share-box{
 margin-top:35px;
@@ -230,7 +293,7 @@ text-decoration:none;
 /* SIDEBAR */
 .sidebar-box h4{
 font-size:26px;
-font-weight:900;
+font-weight:600;
 margin-bottom:20px;
 }
 
@@ -251,7 +314,7 @@ border-radius:10px;
 
 .mini-post h6{
 font-size:15px;
-font-weight:800;
+font-weight:600;
 margin-bottom:6px;
 }
 
@@ -280,7 +343,7 @@ padding:18px;
 
 .blog-content h5{
 font-size:20px;
-font-weight:800;
+font-weight:600;
 margin-bottom:15px;
 }
 
@@ -288,7 +351,7 @@ margin-bottom:15px;
 display:inline-block;
 padding:12px 20px;
 border-radius:12px;
-font-weight:800;
+font-weight:600;
 text-decoration:none;
 color:#fff;
 background:linear-gradient(135deg,#4f46e5,#d946ef);
@@ -311,6 +374,11 @@ height:240px;
 
 .article-content{
 font-size:15px;
+}
+
+.ads-box{
+padding:12px;
+border-radius:14px;
 }
 
 }

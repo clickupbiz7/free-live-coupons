@@ -1,11 +1,10 @@
-{{-- resources/views/frontend/category.blade.php --}}
 @extends('frontend.layout')
 
 @section('content')
 
 <section class="inner-hero">
 <div class="container text-center">
-<h1>🔥 {{ $category->name }}</h1>
+<h1>{{ $category->name }}</h1>
 <p>{{ $coupons->count() }} Coupons Available</p>
 </div>
 </section>
@@ -21,29 +20,49 @@
 
 <div class="col-lg-3 col-md-6">
 
-<div class="coupon-pro-card">
+<div class="coupon-pro-card premium-coupon-card">
 
 <div class="coupon-img-wrap">
+
 <img loading="lazy"
 src="{{ asset('uploads/coupons/'.$c->image) }}"
 onerror="this.src='https://via.placeholder.com/400x250'">
 
-<span class="verified-tag">Verified</span>
-<span class="limited-tag">Limited</span>
+<div class="verified-badge-new">
+<span class="v-icon">✔</span>
+<span class="v-text">VERIFIED</span>
+</div>
+
+<div class="limited-ribbon">
+<span>
+{{ explode(' ', $c->badge ?? 'LIMITED OFFER')[0] ?? 'LIMITED' }}
+<small>{{ explode(' ', $c->badge ?? 'LIMITED OFFER')[1] ?? 'OFFER' }}</small>
+</span>
+</div>
+
 </div>
 
 <div class="coupon-content">
 
-<div class="meta-line">
+<div class="meta-cards-wrap">
+
+<div class="meta-mini-card category-mini">
 <span>{{ $c->category->name ?? 'Category' }}</span>
+</div>
+
+<div class="meta-mini-card store-mini">
 <span>{{ $c->store->name ?? 'Store' }}</span>
+</div>
+
 </div>
 
 <h5>{{ \Illuminate\Support\Str::limit($c->title,36) }}</h5>
 
+@if($c->description)
 <p class="coupon-desc">
 {{ \Illuminate\Support\Str::limit($c->description,55) }}
 </p>
+@endif
 
 @php
 $discount = explode(' ', trim($c->discount));
@@ -51,23 +70,26 @@ $left = $discount[0] ?? '20';
 $right = $discount[1] ?? 'OFF';
 @endphp
 
-<div class="split-discount">
-<div class="left">{{ $left }}</div>
-<div class="right">{{ $right }}</div>
+<div class="voucher-split-box">
+<div class="voucher-left">{{ $left }}</div>
+<div class="voucher-right">{{ $right }}</div>
 </div>
 
 <div class="expiry-wrap">
+
 <span>
 Expiry:
 {{ $c->expiry_date ? date('d M',strtotime($c->expiry_date)) : 'Soon' }}
 </span>
 
-<span class="live-timer" data-date="{{ $c->expiry_date }}">
+<span class="live-timer"
+data-date="{{ $c->expiry_date }}">
 Loading...
 </span>
+
 </div>
 
-<button class="reveal-btn"
+<button class="reveal-btn premium-reveal-btn"
 data-bs-toggle="modal"
 data-bs-target="#couponModal{{ $c->id }}">
 
@@ -80,7 +102,23 @@ View Deal
 </span>
 
 <span class="btn-back">
-{{ $c->code ? $c->code : 'Open Now' }}
+
+@if($c->code)
+
+@php
+$code = $c->code;
+$visible = substr($code,0,3);
+$hidden = str_repeat('#', max(strlen($code)-2,2));
+@endphp
+
+{{ $visible.$hidden }}
+
+@else
+
+Open Now
+
+@endif
+
 </span>
 
 </button>
@@ -90,34 +128,38 @@ View Deal
 
 </div>
 
+{{-------------------------------- PREMIUM MODAL ---------------------------}}
 
-
-{{-- MODAL --}}
 <div class="modal fade" id="couponModal{{ $c->id }}" tabindex="-1">
-<div class="modal-dialog modal-dialog-centered">
-<div class="modal-content premium-modal">
+<div class="modal-dialog modal-dialog-centered modal-md">
+<div class="modal-content premium-modal-wrap">
 
-<div class="modal-body text-center p-4">
-
+<div class="modal-top-image">
 <img src="{{ asset('uploads/coupons/'.$c->image) }}"
-class="modal-coupon-img">
+onerror="this.src='https://via.placeholder.com/600x280'">
+</div>
 
-<h4 class="mt-3 fw-bold">{{ $c->title }}</h4>
+<div class="modal-body premium-modal-body">
 
-<div class="split-discount mt-3 mb-3">
-<div class="left">{{ $left }}</div>
-<div class="right">{{ $right }}</div>
+<h4 class="modal-title-pro">{{ $c->title }}</h4>
+
+<div class="voucher-split-box mt-3 mb-3">
+<div class="voucher-left">{{ $left }}</div>
+<div class="voucher-right">{{ $right }}</div>
 </div>
 
 @if($c->code)
 
-<div class="code-box">
-{{ $c->code }}
-</div>
+<div class="code-box">{{ $c->code }}</div>
 
-<button onclick="copyAndOpen('{{ $c->code }}','{{ $c->affiliate_link }}')"
-class="copy-btn mt-3">
-Copy Code & Open Store
+<button type="button"
+class="copy-btn premium-modal-btn mt-3"
+onclick="copyCouponAndOpen(this)"
+data-code="{{ $c->code }}"
+data-link="{{ $c->affiliate_link }}">
+<span class="btn-front">Copy Code & Open Store</span>
+<span class="btn-back">{{ $c->code }}</span>
+
 </button>
 
 @else
@@ -125,22 +167,40 @@ Copy Code & Open Store
 <a href="{{ $c->affiliate_link }}"
 target="_blank"
 rel="nofollow sponsored noopener noreferrer"
-class="copy-btn mt-3 text-decoration-none">
-Open Deal
+class="copy-btn premium-modal-btn mt-3 text-decoration-none">
+
+<span class="btn-front">Open Deal</span>
+<span class="btn-back">Go Now</span>
+
 </a>
 
 @endif
 
-<div class="share-row">
-<a target="_blank" href="https://facebook.com/sharer/sharer.php?u={{ url()->current() }}"><i class="fab fa-facebook-f"></i></a>
-<a target="_blank" href="https://twitter.com/intent/tweet?url={{ url()->current() }}"><i class="fab fa-x-twitter"></i></a>
-<a target="_blank" href="https://instagram.com"><i class="fab fa-instagram"></i></a>
-<a target="_blank" href="https://pinterest.com/pin/create/button/?url={{ url()->current() }}"><i class="fab fa-pinterest"></i></a>
-<a target="_blank" href="https://wa.me/?text={{ url()->current() }}"><i class="fab fa-whatsapp"></i></a>
-<a target="_blank" href="https://youtube.com"><i class="fab fa-youtube"></i></a>
+<div class="share-row premium-share-row">
+
+<a target="_blank"
+href="https://facebook.com/sharer/sharer.php?u={{ url()->current() }}">
+<i class="fab fa-facebook-f"></i>
+</a>
+
+<a target="_blank"
+href="https://twitter.com/intent/tweet?url={{ url()->current() }}">
+<i class="fab fa-x-twitter"></i>
+</a>
+
+<a target="_blank"
+href="https://wa.me/?text={{ url()->current() }}">
+<i class="fab fa-whatsapp"></i>
+</a>
+
+<a target="_blank"
+href="https://pinterest.com/pin/create/button/?url={{ url()->current() }}">
+<i class="fab fa-pinterest"></i>
+</a>
+
 </div>
 
-<a href="{{ route('terms') }}" class="terms-link">
+<a href="{{ route('terms') }}" class="terms-box-btn">
 Terms & Conditions
 </a>
 
@@ -152,7 +212,7 @@ Terms & Conditions
 @empty
 
 <div class="col-12 text-center py-5">
-<h4>No Coupons Found 😢</h4>
+<h4>No Coupons Found</h4>
 </div>
 
 @endforelse
@@ -175,14 +235,14 @@ Terms & Conditions
 .inner-hero{
 padding:75px 0;
 background:
-radial-gradient(circle at top right,#7c3aed33,transparent 35%),
-linear-gradient(135deg,#0f172a,#111827,#1e293b);
+radial-gradient(circle at left,#ffffff22,transparent 30%),
+linear-gradient(135deg,#4f46e5,#7c3aed,#d946ef);
 color:#fff;
 }
 
 .inner-hero h1{
-font-size:52px;
-font-weight:900;
+font-size:36px;
+font-weight:700;
 margin-bottom:10px;
 }
 
@@ -191,7 +251,7 @@ font-size:18px;
 opacity:.92;
 }
 
-/* ALPHABET FIX */
+/* ALPHABET */
 .alphabet-bar{
 display:flex;
 flex-wrap:wrap;
@@ -207,15 +267,11 @@ border-radius:30px;
 font-size:13px;
 text-decoration:none;
 color:#111827;
-background:#ffffff;
+background:#fff;
 border:1px solid #e5e7eb;
-transition:.3s;
 font-weight:700;
-line-height:1;
-display:inline-block;
-min-width:38px;
-text-align:center;
 box-shadow:0 4px 10px rgba(0,0,0,.04);
+transition:.3s;
 }
 
 .alphabet-bar a:hover{
@@ -237,24 +293,24 @@ color:#fff;
 border:none;
 }
 
-/* CARD */
-.coupon-pro-card{
+/* PREMIUM CARD */
+.premium-coupon-card{
 background:#fff;
-border-radius:12px;
+border-radius:18px;
 overflow:hidden;
-box-shadow:0 10px 25px rgba(0,0,0,.06);
-transition:.3s;
-height:100%;
+box-shadow:0 12px 30px rgba(0,0,0,.08);
 border:1px solid #ececec;
+transition:.3s;
+height:auto;
 }
 
-.coupon-pro-card:hover{
+.premium-coupon-card:hover{
 transform:translateY(-8px);
-box-shadow:0 18px 35px rgba(0,0,0,.10);
+box-shadow:0 18px 40px rgba(0,0,0,.14);
 }
 
 .coupon-img-wrap{
-height:160px;
+height:185px;
 position:relative;
 overflow:hidden;
 }
@@ -263,189 +319,394 @@ overflow:hidden;
 width:100%;
 height:100%;
 object-fit:cover;
+display:block;
 }
 
-.verified-tag,.limited-tag{
+/* VERIFIED */
+.verified-badge-new{
 position:absolute;
-top:10px;
-padding:5px 10px;
-font-size:11px;
-font-weight:700;
-color:#fff;
-border-radius:20px;
+top:12px;
+left:12px;
+display:flex;
+align-items:center;
+z-index:5;
 }
 
-.verified-tag{left:10px;background:#16a34a;}
-.limited-tag{right:10px;background:#dc2626;}
-
-.coupon-content{padding:14px;}
-
-.meta-line{
+.v-icon{
+width:28px;
+height:28px;
+border-radius:50%;
+background:#0ea5e9;
+color:#fff;
 display:flex;
-justify-content:space-between;
+align-items:center;
+justify-content:center;
+font-size:13px;
+font-weight:800;
+box-shadow:0 4px 10px rgba(0,0,0,.18);
+}
+
+.v-text{
+height:28px;
+padding:0 12px;
+background:#111827;
+color:#fff;
+display:flex;
+align-items:center;
 font-size:11px;
+font-weight:800;
+letter-spacing:.8px;
+border-radius:20px;
+margin-left:6px;
+}
+
+/* LIMITED */
+.limited-ribbon{
+position:absolute;
+top:-2px;
+right:14px;
+background:#ef4444;
+color:#fff;
+padding:10px 10px 12px;
+font-size:11px;
+font-weight:600;
+border-radius:0 0 8px 8px;
+box-shadow:0 8px 18px rgba(0,0,0,.18);
+z-index:5;
+}
+
+.limited-ribbon:before{
+content:'';
+position:absolute;
+top:0;
+left:-6px;
+border-right:6px solid #b91c1c;
+border-top:6px solid transparent;
+}
+
+.limited-ribbon:after{
+content:'';
+position:absolute;
+top:0;
+right:-6px;
+border-left:6px solid #b91c1c;
+border-top:6px solid transparent;
+}
+
+.limited-ribbon span{
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:2px;
+transform:rotate(-360deg);
+transform-origin:center;
+line-height:1;
+margin-top:30px;
+white-space:normal;
+text-align:center;
+}
+
+.limited-ribbon span small{
+font-size:10px;
 font-weight:700;
-color:#64748b;
-margin-bottom:8px;
+}
+
+.coupon-content{
+padding:14px;
+}
+
+.meta-cards-wrap{
+display:flex;
+gap:6px;
+margin-bottom:12px;
+}
+
+.meta-mini-card{
+flex:1;
+min-height:20px;
+border-radius:6px;
+padding:8px;
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+font-size:11px;
+font-weight:600;
+line-height:1.2;
+overflow:hidden;
+}
+
+.category-mini{
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+color:#fff;
+}
+
+.store-mini{
+background:linear-gradient(135deg,#fff,#f5f5f5);
+color:#111827;
+border:1px solid #e5e7eb;
 }
 
 .coupon-content h5{
 font-size:16px;
-font-weight:800;
+font-weight:600;
 line-height:1.35;
-min-height:42px;
-margin-bottom:6px;
+margin-bottom:8px;
 }
 
 .coupon-desc{
 font-size:13px;
 color:#6b7280;
-line-height:1.4;
-min-height:34px;
-margin-bottom:10px;
+line-height:1.5;
+margin-bottom:12px;
 }
 
-.split-discount{
+.voucher-split-box{
 display:grid;
-grid-template-columns:1fr 1fr;
-overflow:hidden;
+grid-template-columns:1fr 2fr;
 border-radius:10px;
-margin-bottom:10px;
+overflow:hidden;
+margin-bottom:12px;
+box-shadow:0 10px 22px rgba(0,0,0,.08);
 }
 
-.split-discount .left{
-background:#dc2626;
+.voucher-left{
+background:linear-gradient(135deg,#7c3aed,#d946ef);
 color:#fff;
-padding:10px;
+padding:10px 10px;
+font-size:20px;
+font-weight:600;
 text-align:center;
-font-size:22px;
-font-weight:900;
 }
 
-.split-discount .right{
-background:#111827;
-color:#fff;
-padding:10px;
+.voucher-right{
+background:#fff7ed;
+color:#111827;
+padding:10px 10px;
 display:flex;
-justify-content:center;
 align-items:center;
-font-size:14px;
-font-weight:700;
+justify-content:center;
+font-size:20px;
+font-weight:600;
+border-left:2px dashed rgba(0,0,0,.15);
 }
 
 .expiry-wrap{
 display:flex;
 justify-content:space-between;
-font-size:12px;
+gap:10px;
+font-size:11px;
 font-weight:600;
-margin-bottom:12px;
 color:#6b7280;
+margin-bottom:14px;
 }
 
 .live-timer{
 color:#dc2626;
-font-weight:800;
 }
 
-.reveal-btn{
+/* BUTTON */
+.premium-reveal-btn{
 width:100%;
-height:46px;
+height:54px;
 border:none;
 border-radius:10px;
 position:relative;
 overflow:hidden;
-font-weight:800;
 cursor:pointer;
 background:#111827;
 }
 
-.btn-front,.btn-back{
+.premium-reveal-btn:before,
+.premium-reveal-btn:after{
+content:'';
 position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
+top:50%;
+transform:translateY(-50%);
+width:16px;
+height:16px;
+background:#fff;
+border-radius:50%;
+z-index:3;
+}
+
+.premium-reveal-btn:before{left:-8px;}
+.premium-reveal-btn:after{right:-8px;}
+
+.premium-reveal-btn .btn-front,
+.premium-reveal-btn .btn-back{
+position:absolute;
+inset:0;
 display:flex;
-justify-content:center;
 align-items:center;
+justify-content:center;
+font-size:16px;
+font-weight:600;
 transition:.45s ease;
 }
 
-.btn-front{
-background:linear-gradient(135deg,#4f46e5,#d946ef);
+.premium-reveal-btn .btn-front{
+background:linear-gradient(135deg,#111827,#374151);
 color:#fff;
 z-index:2;
 }
 
-.btn-back{
-background:#111827;
+.premium-reveal-btn .btn-back{
+background:linear-gradient(135deg,#7c3aed,#d946ef);
 color:#fff;
-z-index:1;
 }
 
-.reveal-btn:hover .btn-front{
+.premium-reveal-btn:hover .btn-front{
 transform:translateX(100%);
 }
 
-.premium-modal{border-radius:14px;}
 
-.modal-coupon-img{
-height:120px;
-object-fit:contain;
+/* MODAL */
+.premium-modal-wrap{
+border:none;
+border-radius:22px;
+overflow:hidden;
+box-shadow:0 25px 60px rgba(0,0,0,.18);
+background:#fff;
+}
+
+.modal-top-image{
+height:180px;
+overflow:hidden;
+}
+
+.modal-top-image img{
+width:100%;
+height:100%;
+object-fit:cover;
+display:block;
+}
+
+.premium-modal-body{
+padding:22px;
+text-align:center;
+}
+
+.modal-title-pro{
+font-size:20px;
+font-weight:600;
+margin-bottom:10px;
+color:#111827;
+}
+
+.premium-modal-btn{
+width:100%;
+height:54px;
+border:none;
+border-radius:10px;
+position:relative;
+overflow:hidden;
+display:block;
+padding:0;
+text-decoration:none;
+background:#111827;
+}
+
+.premium-modal-btn:before,
+.premium-modal-btn:after{
+content:'';
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+width:16px;
+height:16px;
+background:#fff;
+border-radius:50%;
+z-index:3;
+}
+
+.premium-modal-btn:before{left:-8px;}
+.premium-modal-btn:after{right:-8px;}
+
+.premium-modal-btn .btn-front,
+.premium-modal-btn .btn-back{
+position:absolute;
+inset:0;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:16px;
+font-weight:600;
+transition:.45s ease;
+}
+
+.premium-modal-btn .btn-front{
+background:linear-gradient(135deg,#111827,#374151);
+color:#fff;
+z-index:2;
+}
+
+.premium-modal-btn .btn-back{
+background:linear-gradient(135deg,#7c3aed,#d946ef);
+color:#fff;
+}
+
+.premium-modal-btn:hover .btn-front{
+transform:translateX(100%);
 }
 
 .code-box{
 padding:12px;
-font-size:24px;
-font-weight:800;
-border:2px dashed #111;
-border-radius:10px;
+font-size:20px;
+font-weight:600;
+border:2px dashed #111827;
+border-radius:12px;
 letter-spacing:2px;
+margin-top:6px;
 }
 
-.copy-btn{
-display:block;
-width:100%;
-padding:12px;
-border:none;
-border-radius:8px;
-text-align:center;
-font-weight:700;
-color:#fff;
-background:linear-gradient(135deg,#4f46e5,#d946ef);
-text-decoration:none;
-}
 
-.share-row{
+.premium-share-row{
 display:flex;
-flex-wrap:wrap;
-gap:10px;
 justify-content:center;
+gap:12px;
 margin-top:18px;
+margin-bottom:14px;
+flex-wrap:wrap;
 }
 
-.share-row a{
+.premium-share-row a{
 width:42px;
 height:42px;
 display:flex;
 align-items:center;
 justify-content:center;
 border-radius:50%;
-background:#f1f5f9;
-color:#111;
+background:#f8fafc;
+border:1px solid #e5e7eb;
+color:#111827;
 text-decoration:none;
 }
 
-.terms-link{
-display:inline-block;
-margin-top:18px;
-font-size:14px;
-font-weight:700;
+.terms-box-btn{
+display:block;
+width:100%;
+padding:8px 16px;
+border-radius:10px;
+background:#f8fafc;
+border:1px solid #eef2f7;
+font-size:13px;
+font-weight:600;
+color:#111827;
 text-decoration:none;
 }
 
 @media(max-width:768px){
-.inner-hero h1{font-size:36px;}
+
+.inner-hero h1{font-size:30px;}
+
+.coupon-img-wrap{height:170px;}
+
+.modal-top-image{height:180px;}
+
+.modal-title-pro{font-size:20px;}
+
 }
 
 </style>
@@ -454,47 +715,103 @@ text-decoration:none;
 
 <script>
 
-function copyAndOpen(code,link){
-navigator.clipboard.writeText(code).catch(()=>{});
+function copyCouponAndOpen(btn)
+{
+var code = btn.getAttribute("data-code") || "";
+var link = btn.getAttribute("data-link") || "";
 
-if(link && link!=''){
+/* COPY */
+copyNow(code);
+
+/* TOAST */
+showCopyToast();
+
+/* REDIRECT AFTER 1.5 SEC */
+if(link !== ""){
 setTimeout(function(){
-window.open(link,'_blank');
-},300);
-}
-}
 
-function updateCouponTimers(){
+var newTab = window.open(link, "_blank");
 
-document.querySelectorAll('.live-timer').forEach(function(el){
-
-let date = el.getAttribute('data-date');
-
-if(!date){
-el.innerHTML='Soon';
-return;
+if(!newTab){
+window.location.href = link;
 }
 
-let end = new Date(date+' 23:59:59').getTime();
-let now = new Date().getTime();
-let diff = end-now;
-
-if(diff <= 0){
-el.innerHTML='Expired';
-return;
+},1500);
 }
 
-let d=Math.floor(diff/(1000*60*60*24));
-let h=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+return false;
+}
 
-el.innerHTML=d+'d '+h+'h left';
 
+/* COPY */
+function copyNow(text)
+{
+if(navigator.clipboard && window.isSecureContext){
+
+navigator.clipboard.writeText(text).catch(function(){
+fallbackCopy(text);
 });
 
+}else{
+fallbackCopy(text);
+}
 }
 
-updateCouponTimers();
-setInterval(updateCouponTimers,60000);
+function fallbackCopy(text)
+{
+var ta = document.createElement("textarea");
+ta.value = text;
+document.body.appendChild(ta);
+ta.focus();
+ta.select();
+
+try{
+document.execCommand("copy");
+}catch(e){}
+
+document.body.removeChild(ta);
+}
+
+
+/* TOAST */
+function showCopyToast()
+{
+var old = document.getElementById("copyToast");
+if(old){ old.remove(); }
+
+var toast = document.createElement("div");
+toast.id = "copyToast";
+toast.innerHTML = "✅ Code Copied";
+
+toast.style.position = "fixed";
+toast.style.top = "15px";
+toast.style.right = "15px";
+toast.style.background = "#111827";
+toast.style.color = "#fff";
+toast.style.padding = "12px 16px";
+toast.style.borderRadius = "10px";
+toast.style.fontWeight = "700";
+toast.style.fontSize = "14px";
+toast.style.zIndex = "999999";
+toast.style.boxShadow = "0 10px 25px rgba(0,0,0,.15)";
+toast.style.opacity = "0";
+toast.style.transition = ".3s";
+
+document.body.appendChild(toast);
+
+setTimeout(function(){
+toast.style.opacity = "1";
+},100);
+
+setTimeout(function(){
+toast.style.opacity = "0";
+
+setTimeout(function(){
+toast.remove();
+},300);
+
+},1700);
+}
 
 </script>
 

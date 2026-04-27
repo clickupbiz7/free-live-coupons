@@ -16,6 +16,23 @@
 
 <div class="container py-5">
 
+@if(session('success'))
+<div class="alert alert-success rounded-3 mb-4">
+{{ session('success') }}
+</div>
+@endif
+
+@if ($errors->any())
+<div class="alert alert-danger rounded-3 mb-4">
+<ul class="mb-0 ps-3">
+@foreach ($errors->all() as $error)
+<li>{{ $error }}</li>
+@endforeach
+</ul>
+</div>
+@endif
+
+
 <div class="row g-4">
 
 <!-- FORM -->
@@ -28,37 +45,49 @@
 <p>Have questions? Send us a message anytime.</p>
 </div>
 
-<form>
+<form method="POST" action="{{ route('contact.send') }}">
+@csrf
 
 <div class="row">
 
 <div class="col-md-6 mb-3">
 <input type="text"
+name="name"
+value="{{ old('name') }}"
 class="form-control contact-input"
-placeholder="Your Name">
+placeholder="Your Name"
+required>
 </div>
 
 <div class="col-md-6 mb-3">
 <input type="email"
+name="email"
+value="{{ old('email') }}"
 class="form-control contact-input"
-placeholder="Your Email">
+placeholder="Your Email"
+required>
 </div>
 
 <div class="col-md-12 mb-3">
 <input type="text"
+name="subject"
+value="{{ old('subject') }}"
 class="form-control contact-input"
-placeholder="Subject">
+placeholder="Subject"
+required>
 </div>
 
 <div class="col-md-12 mb-3">
 <textarea
 rows="6"
+name="message"
 class="form-control contact-input"
-placeholder="Your Message"></textarea>
+placeholder="Your Message"
+required>{{ old('message') }}</textarea>
 </div>
 
 <div class="col-md-12">
-<button class="send-btn w-100">
+<button type="submit" class="send-btn w-100">
 <i class="fa fa-paper-plane me-2"></i>
 Send Message
 </button>
@@ -90,7 +119,7 @@ We usually reply within 24 hours.
 </div>
 <div>
 <h6>Address</h6>
-<p>Lahore, Pakistan</p>
+<p>{{ \App\Models\Setting::get('contact_address') ?: 'Lahore, Pakistan' }}</p>
 </div>
 </div>
 
@@ -100,7 +129,7 @@ We usually reply within 24 hours.
 </div>
 <div>
 <h6>Email</h6>
-<p>support@site.com</p>
+<p>{{ \App\Models\Setting::get('contact_email') ?: 'support@site.com' }}</p>
 </div>
 </div>
 
@@ -110,18 +139,40 @@ We usually reply within 24 hours.
 </div>
 <div>
 <h6>Phone</h6>
-<p>+92 300 1234567</p>
+<p>{{ \App\Models\Setting::get('contact_phone') ?: '+92 300 1234567' }}</p>
 </div>
 </div>
 
 
 <div class="social-icons">
 
+@php
+$socials = json_decode(\App\Models\Setting::get('social_links'), true);
+@endphp
+
+@if($socials && count($socials))
+
+@foreach($socials as $social)
+
+<a href="{{ $social['url'] }}" target="_blank">
+
+@if(!empty($social['icon']))
+<i class="{{ $social['icon'] }}"></i>
+@else
+<i class="fa fa-link"></i>
+@endif
+
+</a>
+
+@endforeach
+
+@else
+
 <a href="#"><i class="fab fa-facebook-f"></i></a>
-<a href="#"><i class="fab fa-x-twitter"></i></a>
 <a href="#"><i class="fab fa-instagram"></i></a>
 <a href="#"><i class="fab fa-youtube"></i></a>
-<a href="#"><i class="fab fa-whatsapp"></i></a>
+
+@endif
 
 </div>
 
@@ -137,10 +188,12 @@ We usually reply within 24 hours.
 <div class="map-wrap mt-5">
 
 <iframe
-src="https://maps.google.com/maps?q=lahore&t=&z=13&ie=UTF8&iwloc=&output=embed"
+src="{{ \App\Models\Setting::get('contact_map') ?: 'https://maps.google.com/maps?q=lahore&t=&z=13&ie=UTF8&iwloc=&output=embed' }}"
 width="100%"
 height="340"
-style="border:0;">
+style="border:0;"
+loading="lazy"
+allowfullscreen>
 </iframe>
 
 </div>
@@ -155,14 +208,14 @@ style="border:0;">
 .inner-hero{
 padding:80px 0;
 background:
-radial-gradient(circle at top right,#7c3aed33,transparent 35%),
-linear-gradient(135deg,#0f172a,#111827,#1e293b);
+radial-gradient(circle at left,#ffffff22,transparent 30%),
+linear-gradient(135deg,#4f46e5,#7c3aed,#d946ef);
 color:#fff;
 }
 
 .inner-hero h1{
-font-size:54px;
-font-weight:900;
+font-size:36px;
+font-weight:600;
 margin-bottom:10px;
 }
 
@@ -181,8 +234,8 @@ height:100%;
 }
 
 .contact-head h4{
-font-size:28px;
-font-weight:800;
+font-size:24px;
+font-weight:600;
 margin-bottom:8px;
 }
 
@@ -208,7 +261,7 @@ border-color:#6366f1;
 padding:14px;
 border:none;
 border-radius:12px;
-font-weight:800;
+font-weight:600;
 color:#fff;
 background:linear-gradient(135deg,#4f46e5,#d946ef);
 transition:.3s;
@@ -228,8 +281,8 @@ height:100%;
 }
 
 .info-card h4{
-font-size:28px;
-font-weight:800;
+font-size:24px;
+font-weight:600;
 margin-bottom:5px;
 }
 
@@ -255,7 +308,7 @@ flex-shrink:0;
 }
 
 .info-row h6{
-font-weight:800;
+font-weight:600;
 margin-bottom:4px;
 }
 

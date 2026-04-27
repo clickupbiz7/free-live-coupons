@@ -8,54 +8,254 @@ use App\Models\Coupon;
 use App\Models\Category;
 use App\Models\Store;
 use App\Models\Blog;
+use App\Models\Ad;
 use App\Models\Setting;
+use App\Models\ContactMessage;
+use App\Models\AdminNotification;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
     // ================= HOME =================
     public function index()
     {
-        $coupons = Coupon::orderBy('id', 'DESC')->take(8)->get();
+        $coupons = Coupon::where('status', 1)
+            ->where('featured', 1)
+            ->where(function ($q) {
+                $q->whereNull('expiry_date')
+                  ->orWhereDate('expiry_date', '>=', now()->toDateString());
+            })
+            ->latest()
+            ->take(8)
+            ->get();
 
-        $categories = Category::orderBy('id', 'DESC')->take(20)->get();
-        $stores     = Store::orderBy('id', 'DESC')->take(20)->get();
-        $blogs      = Blog::orderBy('id', 'DESC')->take(4)->get();
+        $categories = Category::latest()->take(20)->get();
+
+        $stores = Store::where('status', 1)
+            ->latest()
+            ->take(20)
+            ->get();
+
+        $blogs = Blog::where('status', 1)
+            ->latest()
+            ->take(4)
+            ->get();
+
+        $homeTopAd = Ad::active()->where('placement', 'home_top')->first();
+        $homeMiddleAd = Ad::active()->where('placement', 'home_middle')->first();
+        $homeBottomAd = Ad::active()->where('placement', 'home_bottom')->first();
 
         return view('frontend.home', compact(
             'coupons',
             'categories',
             'stores',
-            'blogs'
+            'blogs',
+            'homeTopAd',
+            'homeMiddleAd',
+            'homeBottomAd'
         ));
     }
+
+    // ================= ALL BLOGS =================
+    public function allBlogs(Request $request)
+    {
+        $featuredPost = Blog::where('status', 1)
+            ->latest()
+            ->first();
+
+        $blogs = Blog::where('status', 1);
+
+        if ($request->search) {
+            $blogs->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->category) {
+            $blogs->where('category_id', $request->category);
+        }
+
+        if ($featuredPost) {
+            $blogs->where('id', '!=', $featuredPost->id);
+        }
+
+        $blogs = $blogs->latest()->paginate(9);
+
+        $latestPosts = Blog::where('status', 1)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $categories = collect();
+
+        if (Schema::hasTable('blog_categories')) {
+
+            $categories = DB::table('blog_categories')
+                ->leftJoin(
+                    'blogs',
+                    'blog_categories.id',
+                    '=',
+                    'blogs.category_id'
+                )
+                ->select(
+                    'blog_categories.id',
+                    'blog_categories.name',
+                    DB::raw('COUNT(blogs.id) as blogs_count')
+                )
+                ->groupBy(
+                    'blog_categories.id',
+                    'blog_categories.name'
+                )
+                ->orderBy('blog_categories.name')
+                ->get();
+        }
+
+        $blogTopAd = Ad::active()
+            ->where('placement', 'blogs_top')
+            ->first();
+
+        $blogMiddleAd = Ad::active()
+            ->where('placement', 'blogs_middle')
+            ->first();
+
+        return view('frontend.blogs', compact(
+            'featuredPost',
+            'blogs',
+            'latestPosts',
+            'categories',
+            'blogTopAd',
+            'blogMiddleAd'
+        ));
+    }
+
+    // ================= SINGLE BLOG =================
+
+public function singleBlog($slug)
+{
+    $blog = Blog::where('slug', $slug)->firstOrFail();
+
+    $relatedBlogs = Blog::where('status', 1)
+        ->where('id', '!=', $blog->id)
+        ->where('category_id', $blog->category_id)
+        ->latest()
+        ->take(3)
+        ->get();
+
+    $latestPosts = Blog::where('status', 1)
+        ->latest()
+        ->take(5)
+        ->get();
+
+    $categories = collect();
+
+    if (Schema::hasTable('blog_categories')) {
+
+        $categories = DB::table('blog_categories')
+            ->leftJoin(
+                'blogs',
+                'blog_categories.id',
+                '=',
+                'blogs.category_id'
+            )
+            ->select(
+                'blog_categories.id',
+                'blog_categories.name',
+                DB::raw('COUNT(blogs.id) as blogs_count')
+            )
+            ->groupBy(
+                'blog_categories.id',
+                'blog_categories.name'
+            )
+            ->orderBy('blog_categories.name')
+            ->get();
+    }
+
+    $singleBlogTopAd = Ad::active()
+        ->where('placement', 'single_blog_top')
+        ->first();
+
+    $singleBlogMiddleAd = Ad::active()
+        ->where('placement', 'single_blog_middle')
+        ->first();
+
+    $blogSidebarAd = Ad::active()
+        ->where('placement', 'blog_sidebar')
+        ->first();
+
+    AdminNotification::create([
+        'title'   => 'Blog Viewed',
+        'message' => $blog->title . ' was opened by a visitor',
+        'type'    => 'blog',
+        'url'     => route('admin.blogs.index'),
+        'is_read' => 0
+    ]);
+
+    return view('frontend.blog-single', compact(
+        'blog',
+        'relatedBlogs',
+        'latestPosts',
+        'categories',
+        'singleBlogTopAd',
+        'singleBlogMiddleAd',
+        'blogSidebarAd'
+    ));
+}
+
+// ================= blogCategory =================
+
+public function blogCategory($category)
+{
+    $blogs = Blog::where('status',1)
+        ->where('category_id',$category)
+        ->latest()
+        ->paginate(9);
+
+    $latestPosts = Blog::where('status',1)
+        ->latest()
+        ->take(5)
+        ->get();
+
+    $categories = DB::table('blog_categories')
+        ->leftJoin(
+            'blogs',
+            'blog_categories.id',
+            '=',
+            'blogs.category_id'
+        )
+        ->select(
+            'blog_categories.id',
+            'blog_categories.name',
+            DB::raw('COUNT(blogs.id) as blogs_count')
+        )
+        ->groupBy(
+            'blog_categories.id',
+            'blog_categories.name'
+        )
+        ->orderBy('blog_categories.name')
+        ->get();
+
+    return view('frontend.blogs', compact(
+        'blogs',
+        'latestPosts',
+        'categories'
+    ));
+}
 
     // ================= ALL COUPONS =================
     public function allCoupons(Request $request)
     {
-        $query = Coupon::query();
+        $query = Coupon::where('status', 1)
+            ->where(function ($q) {
+                $q->whereNull('expiry_date')
+                  ->orWhereDate('expiry_date', '>=', now()->toDateString());
+            });
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('code', 'like', '%' . $request->search . '%');
-            });
+            $query->where('title', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->store) {
-            $query->where('store_id', $request->store);
-        }
+        $coupons = $query->latest()->paginate(12);
 
-        if ($request->category) {
-            $query->where('category_id', $request->category);
-        }
-
-        if ($request->alpha) {
-            $query->where('title', 'like', $request->alpha . '%');
-        }
-
-        $coupons = $query->orderBy('id', 'DESC')->paginate(12);
-
-        $stores = Store::orderBy('name')->get();
+        $stores = Store::where('status', 1)->orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
 
         return view('frontend.coupons', compact(
@@ -65,83 +265,21 @@ class HomeController extends Controller
         ));
     }
 
-    // ================= STORE DETAIL =================
-    public function store(Request $request, $slug)
-    {
-        $store = Store::where('slug', $slug)->firstOrFail();
-
-        $query = Coupon::where('store_id', $store->id);
-
-        if ($request->search) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->category) {
-            $query->where('category_id', $request->category);
-        }
-
-        if ($request->alpha) {
-            $query->where('title', 'like', $request->alpha . '%');
-        }
-
-        $coupons = $query->orderBy('id', 'DESC')->paginate(12);
-        $categories = Category::orderBy('name')->get();
-
-        return view('frontend.store', compact(
-            'store',
-            'coupons',
-            'categories'
-        ));
-    }
-
-    // ================= CATEGORY DETAIL =================
-    public function category(Request $request, $slug)
-    {
-        $category = Category::where('slug', $slug)->firstOrFail();
-
-        $query = Coupon::where('category_id', $category->id);
-
-        if ($request->search) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->store) {
-            $query->where('store_id', $request->store);
-        }
-
-        if ($request->alpha) {
-            $query->where('title', 'like', $request->alpha . '%');
-        }
-
-        $coupons = $query->orderBy('id', 'DESC')->paginate(12);
-        $stores = Store::orderBy('name')->get();
-
-        return view('frontend.category', compact(
-            'category',
-            'coupons',
-            'stores'
-        ));
-    }
-
-    // ================= ALL STORES =================
+    // ================= STORES =================
     public function allStores(Request $request)
     {
-        $query = Store::query();
+        $query = Store::where('status', 1);
 
         if ($request->search) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->alpha) {
-            $query->where('name', 'like', $request->alpha . '%');
-        }
-
-        $stores = $query->orderBy('id', 'DESC')->paginate(12);
+        $stores = $query->latest()->paginate(12);
 
         return view('frontend.stores', compact('stores'));
     }
 
-    // ================= ALL CATEGORIES =================
+    // ================= CATEGORIES =================
     public function allCategories(Request $request)
     {
         $query = Category::query();
@@ -150,43 +288,9 @@ class HomeController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->alpha) {
-            $query->where('name', 'like', $request->alpha . '%');
-        }
-
-        $categories = $query->orderBy('id', 'DESC')->paginate(12);
+        $categories = $query->latest()->paginate(12);
 
         return view('frontend.categories', compact('categories'));
-    }
-
-    // ================= ALL BLOGS =================
-    public function allBlogs(Request $request)
-    {
-        $query = Blog::query();
-
-        if ($request->search) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
-
-        $blogs = $query->orderBy('id', 'DESC')->paginate(9);
-
-        return view('frontend.blogs', compact('blogs'));
-    }
-
-    // ================= SINGLE BLOG =================
-    public function singleBlog($slug)
-    {
-        $blog = Blog::where('slug', $slug)->firstOrFail();
-
-        $relatedBlogs = Blog::where('id', '!=', $blog->id)
-            ->orderBy('id', 'DESC')
-            ->take(3)
-            ->get();
-
-        return view('frontend.blog-single', compact(
-            'blog',
-            'relatedBlogs'
-        ));
     }
 
     // ================= ABOUT =================
@@ -203,7 +307,35 @@ class HomeController extends Controller
         return view('frontend.contact', compact('content'));
     }
 
-    // ================= PRIVACY POLICY =================
+    // ================= CONTACT SEND =================
+    public function contactSend(Request $request)
+    {
+        $request->validate([
+            'name'    => 'required',
+            'email'   => 'required|email',
+            'subject' => 'required',
+            'message' => 'required',
+        ]);
+
+        ContactMessage::create([
+            'name'    => $request->name,
+            'email'   => $request->email,
+            'subject' => $request->subject,
+            'message' => $request->message,
+        ]);
+
+        AdminNotification::create([
+            'title'   => 'New Contact Message',
+            'message' => $request->name . ' sent a message',
+            'type'    => 'message',
+            'url'     => route('admin.contact.messages'),
+            'is_read' => 0
+        ]);
+
+        return back()->with('success', 'Message Sent Successfully');
+    }
+
+    // ================= PRIVACY =================
     public function privacy()
     {
         $content = Setting::get('privacy_policy');

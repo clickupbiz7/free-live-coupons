@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Models\User;
 
 class AuthController extends Controller
@@ -41,15 +43,12 @@ class AuthController extends Controller
         if (Auth::attempt([
             'email'    => $request->email,
             'password' => $request->password
-        ], $remember))
-        {
+        ], $remember)) {
+
             $request->session()->regenerate();
 
-            session([
-                'last_activity' => time()
-            ]);
-
-            return redirect()->route('admin.dashboard')
+            return redirect()
+                ->route('admin.dashboard')
                 ->with('success', 'Login Successful');
         }
 
@@ -58,7 +57,7 @@ class AuthController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Show Profile Page
+    | Profile Page
     |--------------------------------------------------------------------------
     */
     public function profile()
@@ -68,7 +67,7 @@ class AuthController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Update Email / Password
+    | Update Profile
     |--------------------------------------------------------------------------
     */
     public function updateProfile(Request $request)
@@ -76,27 +75,123 @@ class AuthController extends Controller
         $user = auth()->user();
 
         $request->validate([
-            'email' => 'required|email|unique:users,email,' . $user->id,
-
-            'password' => [
-                'nullable',
-                'min:8',
-                'regex:/[A-Z]/',
-                'regex:/[a-z]/',
-                'regex:/[0-9]/',
-                'regex:/[@$!%*#?&]/'
-            ]
+            'new_email' => 'nullable|email|unique:users,email,' . $user->id,
+            'password'  => 'nullable|confirmed|min:8'
         ]);
 
-        $user->email = $request->email;
-
+        /*
+        |--------------------------------------------------------------------------
+        | PASSWORD UPDATE
+        |--------------------------------------------------------------------------
+        */
         if ($request->filled('password')) {
+
+            if (!$request->filled('current_password')) {
+                return back()->with('error', 'Current password required');
+            }
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->with('error', 'Current password incorrect');
+            }
+
             $user->password = Hash::make($request->password);
+            $user->save();
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | SIMPLE EMAIL CHANGE SYSTEM
+        |--------------------------------------------------------------------------
+        */
+        if ($request->filled('new_email')) {
+
+            if ($request->new_email == $user->email) {
+                return back()->with('error', 'New email must be different');
+            }
+
+            $token = Str::random(64);
+
+            $user->pending_email      = $request->new_email;
+            $user->email_change_token = $token;
+            $user->save();
+
+            $link = route('admin.confirm.current.email', $token);
+
+            Mail::html("
+                <div style='font-family:Arial;padding:30px'>
+                    <h2>Confirm Email Change</h2>
+
+                    <p>You requested to change your login email.</p>
+
+                    <p>Click button below to confirm.</p>
+
+                    <a href='{$link}'
+                    style='background:#111827;
+                           color:#fff;
+                           padding:12px 22px;
+                           border-radius:8px;
+                           text-decoration:none;
+                           display:inline-block'>
+                        Confirm Email Change
+                    </a>
+                </div>
+            ", function ($message) use ($user) {
+
+                $message->to($user->email)
+                        ->subject('Confirm Email Change');
+
+            });
+
+            return back()->with(
+                'success',
+                'Confirmation link sent to CURRENT email.'
+            );
+        }
+
+        return back()->with(
+            'success',
+            'Profile Updated Successfully'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONFIRM CURRENT EMAIL
+    |--------------------------------------------------------------------------
+    */
+    public function confirmCurrentEmail($token)
+    {
+        $user = User::where(
+            'email_change_token',
+            $token
+        )->first();
+
+        if (!$user) {
+            return redirect('/admin/profile')
+                ->with('error', 'Invalid link');
+        }
+
+        $user->email = $user->pending_email;
+        $user->pending_email = null;
+        $user->email_change_token = null;
+        $user->email_verified_at = now();
         $user->save();
 
-        return back()->with('success', 'Profile Updated Successfully');
+        return redirect('/admin/profile')
+            ->with(
+                'success',
+                'Email updated successfully.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VERIFY NEW EMAIL (NOT USED NOW)
+    |--------------------------------------------------------------------------
+    */
+    public function verifyNewEmail($token)
+    {
+        return redirect('/admin/profile');
     }
 
     /*
@@ -120,13 +215,15 @@ class AuthController extends Controller
             'email' => 'required|email'
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where(
+            'email',
+            $request->email
+        )->first();
 
         if (!$user) {
-            return back()->with('error', 'Email Not Found');
+            return back()->with('error', 'Email not found');
         }
 
-        // Temporary New Password
         $newPassword = 'Admin@123';
 
         $user->password = Hash::make($newPassword);
@@ -150,7 +247,8 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('admin.login')
+        return redirect()
+            ->route('admin.login')
             ->with('success', 'Logged Out Successfully');
     }
 }

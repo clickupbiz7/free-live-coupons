@@ -1,6 +1,3 @@
-{{-- =================================================== --}}
-{{-- FILE: resources/views/admin/stores/form.blade.php --}}
-{{-- =================================================== --}}
 @extends('admin.layout')
 
 @section('content')
@@ -15,12 +12,12 @@
         <p class="text-muted mb-0">Manage stores professionally</p>
     </div>
 
-    <a href="{{ route('admin.stores.index') }}" class="btn btn-dark px-4">
+    <a href="{{ route('admin.stores.index') }}" class="btn btn-dark  px-4">
         <i class="fa fa-arrow-left me-2"></i>Back
     </a>
 </div>
 
-<div class="card border-0 shadow-lg rounded-4">
+<div class="card border-0 shadow-lg bg-gradient-primary rounded-4">
 <div class="card-body p-4">
 
 @if(isset($store))
@@ -89,7 +86,7 @@ style="width:140px;height:90px;object-fit:contain;border-radius:12px;border:1px 
 
 <!-- SUBMIT -->
 <div class="col-md-12 pt-2">
-<button class="btn btn-primary px-5 py-2 rounded-pill">
+<button class="btn btn-primary px-5 py-2 rounded">
 <i class="fa fa-save me-2"></i>
 {{ isset($store) ? 'Update Store' : 'Save Store' }}
 </button>

@@ -19,7 +19,15 @@ class Coupon extends Model
         'expiry_date',
         'description',
         'image',
-        'status'
+        'status',
+        'affiliate_link',
+        'featured',
+        'badge'
+    ];
+
+    protected $casts = [
+        'status' => 'integer',
+        'featured' => 'integer'
     ];
 
     public function store()

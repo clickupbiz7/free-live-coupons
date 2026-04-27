@@ -85,14 +85,14 @@ View Deals
 .inner-hero{
 padding:75px 0;
 background:
-radial-gradient(circle at top right,#7c3aed33,transparent 35%),
-linear-gradient(135deg,#0f172a,#111827,#1e293b);
+radial-gradient(circle at left,#ffffff22,transparent 30%),
+linear-gradient(135deg,#4f46e5,#7c3aed,#d946ef);
 color:#fff;
 }
 
 .inner-hero h1{
-font-size:52px;
-font-weight:900;
+font-size:36px;
+font-weight:600;
 margin-bottom:10px;
 }
 
@@ -125,7 +125,7 @@ color:#111;
 background:#fff;
 border:1px solid #e5e7eb;
 transition:.3s;
-font-weight:700;
+font-weight:600;
 }
 
 .alphabet-btn:hover{
@@ -192,7 +192,7 @@ top:12px;
 left:12px;
 padding:6px 12px;
 font-size:11px;
-font-weight:700;
+font-weight:600;
 color:#fff;
 background:#16a34a;
 border-radius:30px;
@@ -206,7 +206,7 @@ text-align:center;
 
 .store-bottom h6{
 font-size:20px;
-font-weight:800;
+font-weight:600;
 margin-bottom:6px;
 }
 
@@ -222,7 +222,7 @@ font-weight:600;
 .store-btn{
 padding:12px;
 border-radius:8px;
-font-weight:800;
+font-weight:600;
 color:#fff;
 background:linear-gradient(135deg,#4f46e5,#d946ef);
 transition:.3s;

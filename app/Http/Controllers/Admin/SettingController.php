@@ -15,7 +15,52 @@ class SettingController extends Controller
 
     public function save(Request $request)
     {
-        /* ================= HEADER LOGO ================= */
+        /*
+        ==========================================
+        REMOVE IMAGES
+        ==========================================
+        */
+        $removeFiles = [
+            'remove_logo'           => 'logo',
+            'remove_footer_logo'   => 'footer_logo',
+            'remove_favicon'       => 'favicon',
+            'remove_youtube_thumb' => 'youtube_thumb',
+        ];
+
+        foreach ($removeFiles as $removeKey => $dbKey) {
+
+            if ($request->$removeKey == 1) {
+
+                $old = DB::table('settings')
+                    ->where('key', $dbKey)
+                    ->value('value');
+
+                if ($old) {
+
+                    $path = $dbKey == 'logo' ||
+                            $dbKey == 'footer_logo' ||
+                            $dbKey == 'favicon'
+                        ? public_path($old)
+                        : public_path('uploads/settings/'.$old);
+
+                    if (file_exists($path)) {
+                        @unlink($path);
+                    }
+                }
+
+                DB::table('settings')->updateOrInsert(
+                    ['key' => $dbKey],
+                    ['value' => '']
+                );
+            }
+        }
+
+        /*
+        ==========================================
+        FILE UPLOADS
+        ==========================================
+        */
+
         if ($request->hasFile('logo')) {
 
             $file = $request->file('logo');
@@ -29,7 +74,6 @@ class SettingController extends Controller
             );
         }
 
-        /* ================= FOOTER LOGO ================= */
         if ($request->hasFile('footer_logo')) {
 
             $file = $request->file('footer_logo');
@@ -43,7 +87,6 @@ class SettingController extends Controller
             );
         }
 
-        /* ================= FAVICON ================= */
         if ($request->hasFile('favicon')) {
 
             $file = $request->file('favicon');
@@ -57,22 +100,39 @@ class SettingController extends Controller
             );
         }
 
-        /* ================= SOCIAL LINKS SAVE ================= */
+        if ($request->hasFile('youtube_thumb')) {
 
-        if ($request->has('social_name')) {
+            $file = $request->file('youtube_thumb');
+            $name = time().'_youtube.'.$file->getClientOriginalExtension();
+
+            $file->move(public_path('uploads/settings'), $name);
+
+            DB::table('settings')->updateOrInsert(
+                ['key' => 'youtube_thumb'],
+                ['value' => $name]
+            );
+        }
+
+        /*
+        ==========================================
+        SOCIAL LINKS
+        ==========================================
+        */
+        if ($request->has('social_platform')) {
 
             $socials = [];
 
-            foreach ($request->social_name as $i => $name) {
+            foreach ($request->social_platform as $i => $platform) {
 
-                if (
-                    !empty($name) &&
-                    !empty($request->social_url[$i])
-                ) {
+                $platform = trim($platform);
+                $url = trim($request->social_url[$i] ?? '');
+
+                if ($platform && $url) {
+
                     $socials[] = [
-                        'name' => $name,
-                        'icon' => $request->social_icon[$i] ?? 'fa-solid fa-link',
-                        'url'  => $request->social_url[$i]
+                        'platform' => $platform,
+                        'icon' => $this->getSocialIcon($platform),
+                        'url' => $url
                     ];
                 }
             }
@@ -83,15 +143,22 @@ class SettingController extends Controller
             );
         }
 
-        /* ================= OTHER SETTINGS ================= */
-
+        /*
+        ==========================================
+        OTHER TEXT SETTINGS
+        ==========================================
+        */
         $skip = [
             '_token',
             'logo',
             'footer_logo',
             'favicon',
-            'social_name',
-            'social_icon',
+            'youtube_thumb',
+            'remove_logo',
+            'remove_footer_logo',
+            'remove_favicon',
+            'remove_youtube_thumb',
+            'social_platform',
             'social_url'
         ];
 
@@ -99,24 +166,30 @@ class SettingController extends Controller
 
             DB::table('settings')->updateOrInsert(
                 ['key' => $key],
-                [
-                    'value' => is_array($value)
-                        ? json_encode($value)
-                        : $value
-                ]
-            );
-        }
-
-        /* ================= CHECKBOX FIX ================= */
-
-        if (!$request->has('maintenance')) {
-
-            DB::table('settings')->updateOrInsert(
-                ['key' => 'maintenance'],
-                ['value' => 0]
+                ['value' => is_array($value) ? json_encode($value) : $value]
             );
         }
 
         return back()->with('success', 'Settings Saved Successfully');
+    }
+
+    private function getSocialIcon($platform)
+    {
+        $platform = strtolower($platform);
+
+        $icons = [
+            'facebook'  => 'fab fa-facebook-f',
+            'instagram' => 'fab fa-instagram',
+            'youtube'   => 'fab fa-youtube',
+            'twitter'   => 'fab fa-x-twitter',
+            'x'         => 'fab fa-x-twitter',
+            'tiktok'    => 'fab fa-tiktok',
+            'whatsapp'  => 'fab fa-whatsapp',
+            'telegram'  => 'fab fa-telegram-plane',
+            'linkedin'  => 'fab fa-linkedin-in',
+            'snapchat'  => 'fab fa-snapchat-ghost',
+        ];
+
+        return $icons[$platform] ?? 'fa-solid fa-link';
     }
 }
