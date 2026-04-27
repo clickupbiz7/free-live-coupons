@@ -1,8 +1,16 @@
+[variables]
+NIXPACKS_PHP_ROOT_DIR = "/app/public"
+
 [phases.setup]
-nixPkgs = [
-  "php84",
-  "php84Extensions.composer",
-  "php84Extensions.gd",
-  "php84Extensions.zip",
-  "unzip"
+nixPkgs = ["php84", "php84Packages.composer"]
+
+aptPkgs = ["libpng-dev", "libjpeg-dev", "libfreetype6-dev"]
+
+[phases.install]
+cmds = [
+  "docker-php-ext-install gd",
+  "composer install --no-dev --optimize-autoloader"
 ]
+
+[start]
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
