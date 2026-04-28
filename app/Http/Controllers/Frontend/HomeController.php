@@ -21,7 +21,6 @@ class HomeController extends Controller
     public function index()
     {
         $coupons = Coupon::where('status', 1)
-            ->where('featured', 1)
             ->where(function ($q) {
                 $q->whereNull('expiry_date')
                   ->orWhereDate('expiry_date', '>=', now()->toDateString());
